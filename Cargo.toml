@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+edition = "2021"
+repository = "https://github.com/GreenCappuccino/unipen-rs"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+unipen = { path = "crates/unipen" }
+lazy-regex = "3.0"
+log = "0.4"
+pest = "2.7"
+pest_derive = "2.7"
+serde = "1.0"
+serde_json = "1.0"
+thiserror = "1.0"
+clap = "4.4"

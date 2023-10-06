@@ -1,0 +1,206 @@
+//! This grammar is derived from UniPen 1.0 Format Definition.
+//!
+//! Certain concessions have been made (such as changing string types to free-text)
+//! in order to maintain better compatibility with the body of existing UniPen datasets.
+
+file = { SOI ~ (statement | ASCII_WHITESPACE)* ~ EOI }
+
+CHARACTER        = _{ LETTER | MARK | NUMBER | PUNCTUATION | SYMBOL }
+ASCII_SEPARATOR  = _{ " " | "\t" }
+ASCII_NEWLINE    = _{ "\r\n" | "\n" }
+ASCII_WHITESPACE = _{ ASCII_SEPARATOR | ASCII_NEWLINE }
+
+STATEMENT_END   = _{ ASCII_SEPARATOR* ~ (!STATEMENT_START ~ ASCII_NEWLINE ~ ASCII_SEPARATOR*)* ~ &STATEMENT_START ~ ASCII_NEWLINE }
+STATEMENT_START = _{ ASCII_NEWLINE ~ &("." | EOI) }
+
+LABEL_SYMBOL    = _{ "." | "," | "!" | "?" | ":" | ";" | "~" | "@" | "#" | "$" | "%" | "^" | "&" | "*" | "-" | "_" | "=" | "+" | "'" | "`" | "/" | "|" | "(" | ")" | "[" | "]" | "{" | "}" | "<" | ">" }
+LABEL_ESCAPED   = _{ "\\\"" | "\\\\" | "\\/" | "\\t" | "\\n" | "\\ " | "\\@" }
+LABEL_CHARACTER = _{ LABEL_ESCAPED | ASCII_ALPHA | ASCII_DIGIT | ASCII_WHITESPACE | LABEL_SYMBOL }
+
+DATE = _{ ((t_number | r_unknown) ~ ASCII_SEPARATOR+ ~ (t_number | r_unknown) ~ ASCII_SEPARATOR+ ~ (t_number | r_unknown)) | r_unknown }
+
+// range form is UPe extension
+AGE = _{ (t_number ~ (ASCII_SEPARATOR+ ~ t_number)?) | r_unknown }
+
+component = { t_number ~ (":" ~ point)? }
+point     = { t_number }
+range     = { component ~ "-" ~ component }
+
+integer = { "-"? ~ ASCII_DIGIT+ }
+decimal = { "-"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT* }
+
+// Data Types
+t_number    = { decimal | integer }
+t_string    = { CHARACTER+ }
+t_free_text = { (!STATEMENT_END ~ (ASCII_WHITESPACE | CHARACTER))* }
+t_label     = { "\"" ~ LABEL_CHARACTER* ~ "\"" }
+
+t_reserved = _{ r_type | r_list | r_x | r_y | r_time | r_pressure | r_z | r_button | r_rho | r_theta | r_phi | r_left_hand | r_right_hand | r_male | r_female | r_bad | r_ok | r_good | r_unknown | r_printed | r_cursive | r_mixed | r_accept | r_reject }
+
+// Reserved Strings
+r_type         = { "[" ~ ("N" | "S" | "F" | "R" | "L" | "." | "+") ~ "]" }
+r_list         = { (range | component) ~ ("," ~ (range | component))* }
+r_x            = { "X" }
+r_y            = { "Y" }
+r_time         = { "T" }
+r_pressure     = { "P" }
+r_z            = { "Z" }
+r_button       = { "BUTTON" }
+r_rho          = { "RHO" }
+r_theta        = { "THETA" }
+r_phi          = { "PHI" }
+r_left_hand    = { "L" }
+r_right_hand   = { "R" }
+r_male         = { "M" }
+r_female       = { "F" }
+r_bad          = { "BAD" }
+r_ok           = { "OK" }
+r_good         = { "GOOD" }
+r_unknown      = { "?" }
+r_printed      = { "PRINTED" }
+r_cursive      = { "CURSIVE" }
+r_mixed        = { "MIXED" }
+r_accept       = { "ACCEPT" }
+r_reject       = { "REJECT" }
+r_seconds      = { "SECONDS" }
+r_milliseconds = { "MILLISECONDS" }
+r_microseconds = { "MICROSECONDS" }
+
+// Reserved groups
+g_unit       = _{ r_x | r_y | r_time | r_pressure | r_z | r_button | r_rho | r_theta | r_phi }
+g_style      = _{ r_printed | r_cursive | r_mixed | r_unknown }
+g_hand       = _{ r_left_hand | r_right_hand | r_unknown }
+g_sex        = _{ r_male | r_female | r_unknown }
+g_skill      = _{ r_bad | r_ok | r_good | r_unknown }
+g_quality    = _{ r_bad | r_ok | r_good | r_unknown }
+g_acceptance = _{ r_accept | r_reject | r_unknown }
+
+// Keywords
+k_keyword           = _{ ".KEYWORD" }
+k_reserve           = _{ ".RESERVE" }
+k_comment           = _{ ".COMMENT" }
+k_include           = _{ ".INCLUDE" }
+k_version           = _{ ".VERSION" }
+k_data_source       = _{ ".DATA_SOURCE" }
+k_data_id           = _{ ".DATA_ID" }
+k_coord             = _{ ".COORD" }
+k_hierarchy         = _{ ".HIERARCHY" }
+k_data_contact      = _{ ".DATA_CONTACT" }
+k_data_info         = _{ ".DATA_INFO" }
+k_setup             = _{ ".SETUP" }
+k_pad               = _{ ".PAD" }
+k_alphabet          = _{ ".ALPHABET" }
+k_alphabet_freq     = _{ ".ALPHABET_FREQ" }
+k_lexicon_source    = _{ ".LEXICON_SOURCE" }
+k_lexicon_id        = _{ ".LEXICON_ID" }
+k_lexicon_contact   = _{ ".LEXICON_CONTACT" }
+k_lexicon_info      = _{ ".LEXICON_INFO" }
+k_lexicon           = _{ ".LEXICON" }
+k_lexicon_freq      = _{ ".LEXICON_FREQ" }
+k_x_dim             = _{ ".X_DIM" }
+k_y_dim             = _{ ".Y_DIM" }
+k_h_line            = _{ ".H_LINE" }
+k_v_line            = _{ ".V_LINE" }
+k_x_points_per_inch = _{ ".X_POINTS_PER_INCH" }
+k_y_points_per_inch = _{ ".Y_POINTS_PER_INCH" }
+k_z_points_per_inch = _{ ".Z_POINTS_PER_INCH" }
+k_x_points_per_mm   = _{ ".X_POINTS_PER_MM" }
+k_y_points_per_mm   = _{ ".Y_POINTS_PER_MM" }
+k_z_points_per_mm   = _{ ".Z_POINTS_PER_MM" }
+k_points_per_gram   = _{ ".POINTS_PER_GRAM" }
+k_points_per_second = _{ ".POINTS_PER_SECOND" }
+k_pen_down          = _{ ".PEN_DOWN" }
+k_pen_up            = _{ ".PEN_UP" }
+k_dt                = _{ ".DT" }
+k_date              = _{ ".DATE" }
+k_style             = _{ ".STYLE" }
+k_writer_id         = _{ ".WRITER_ID" }
+k_country           = _{ ".COUNTRY" }
+k_hand              = _{ ".HAND" }
+k_age               = _{ ".AGE" }
+k_sex               = _{ ".SEX" }
+k_skill             = _{ ".SKILL" }
+k_writer_info       = _{ ".WRITER_INFO" }
+k_segment           = _{ ".SEGMENT" }
+k_start_set         = _{ ".START_SET" }
+k_start_box         = _{ ".START_BOX" }
+k_rec_source        = _{ ".REC_SOURCE" }
+k_rec_id            = _{ ".REC_ID" }
+k_rec_contact       = _{ ".REC_CONTACT" }
+k_rec_info          = _{ ".REC_INFO" }
+k_implement         = _{ ".IMPLEMENT" }
+k_training_set      = _{ ".TRAINING_SET" }
+k_test_set          = _{ ".TEST_SET" }
+k_adapt_set         = _{ ".ADAPT_SET" }
+k_lexicon_set       = _{ ".LEXICON_SET" }
+k_rec_time          = _{ ".REC_TIME" }
+k_rec_labels        = _{ ".REC_LABELS" }
+k_rec_scores        = _{ ".REC_SCORES" }
+// UPe extension
+k_time_unit = _{ ".TIME_UNIT" }
+
+// Statements
+s_keyword           = { k_keyword ~ ASCII_SEPARATOR+ ~ t_string ~ (ASCII_SEPARATOR+ ~ t_reserved)* ~ t_free_text }
+s_reserve           = { k_reserve ~ ASCII_SEPARATOR+ ~ t_string ~ t_free_text ~ STATEMENT_END }
+s_comment           = { k_comment ~ t_free_text ~ STATEMENT_END }
+s_include           = { k_include ~ ASCII_SEPARATOR+ ~ t_string ~ STATEMENT_END }
+s_version           = { k_version ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_data_source       = { k_data_source ~ ASCII_SEPARATOR+ ~ t_free_text ~ STATEMENT_END }
+s_data_id           = { k_data_id ~ ASCII_SEPARATOR+ ~ t_string ~ STATEMENT_END }
+s_coord             = { k_coord ~ (ASCII_SEPARATOR+ ~ g_unit)* ~ STATEMENT_END }
+s_hierarchy         = { k_hierarchy ~ (ASCII_SEPARATOR+ ~ t_string)* ~ STATEMENT_END }
+s_data_contact      = { k_data_contact ~ t_free_text ~ STATEMENT_END }
+s_data_info         = { k_data_info ~ t_free_text ~ STATEMENT_END }
+s_setup             = { k_setup ~ t_free_text ~ STATEMENT_END }
+s_pad               = { k_pad ~ t_free_text ~ STATEMENT_END }
+s_alphabet          = { k_alphabet ~ (!STATEMENT_END ~ ASCII_WHITESPACE+ ~ t_label)* ~ STATEMENT_END }
+s_alphabet_freq     = { k_alphabet_freq ~ (!STATEMENT_END ~ ASCII_WHITESPACE+ ~ t_number)* ~ STATEMENT_END }
+s_lexicon_source    = { k_lexicon_source ~ t_free_text ~ STATEMENT_END }
+s_lexicon_id        = { k_lexicon_id ~ ASCII_SEPARATOR+ ~ t_string ~ STATEMENT_END }
+s_lexicon_contact   = { k_lexicon_contact ~ t_free_text ~ STATEMENT_END }
+s_lexicon_info      = { k_lexicon_info ~ t_free_text ~ STATEMENT_END }
+s_lexicon           = { k_lexicon ~ (!STATEMENT_END ~ ASCII_WHITESPACE+ ~ t_label)* ~ STATEMENT_END }
+s_lexicon_freq      = { k_lexicon_freq ~ (!STATEMENT_END ~ ASCII_WHITESPACE+ ~ t_number)* ~ STATEMENT_END }
+s_x_dim             = { k_x_dim ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_y_dim             = { k_y_dim ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_h_line            = { k_h_line ~ (!STATEMENT_END ~ ASCII_WHITESPACE+ ~ t_number)* ~ STATEMENT_END }
+s_v_line            = { k_v_line ~ (!STATEMENT_END ~ ASCII_WHITESPACE+ ~ t_number)* ~ STATEMENT_END }
+s_x_points_per_inch = { k_x_points_per_inch ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_y_points_per_inch = { k_y_points_per_inch ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_z_points_per_inch = { k_z_points_per_inch ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_x_points_per_mm   = { k_x_points_per_mm ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_y_points_per_mm   = { k_y_points_per_mm ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_z_points_per_mm   = { k_z_points_per_mm ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_points_per_gram   = { k_points_per_gram ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_points_per_second = { k_points_per_second ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_pen_down          = { k_pen_down ~ (!STATEMENT_END ~ ASCII_WHITESPACE+ ~ t_number)* ~ STATEMENT_END }
+s_pen_up            = { k_pen_up ~ (!STATEMENT_END ~ ASCII_WHITESPACE+ ~ t_number)* ~ STATEMENT_END }
+s_dt                = { k_dt ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_date              = { k_date ~ ASCII_SEPARATOR+ ~ DATE ~ STATEMENT_END }
+s_style             = { k_style ~ ASCII_SEPARATOR+ ~ g_style ~ STATEMENT_END }
+s_writer_id         = { k_writer_id ~ ASCII_SEPARATOR+ ~ t_string ~ STATEMENT_END }
+s_country           = { k_country ~ ASCII_SEPARATOR+ ~ t_free_text ~ STATEMENT_END }
+s_hand              = { k_hand ~ ASCII_SEPARATOR+ ~ g_hand ~ STATEMENT_END }
+s_age               = { k_age ~ ASCII_SEPARATOR+ ~ AGE ~ STATEMENT_END }
+s_sex               = { k_sex ~ ASCII_SEPARATOR+ ~ g_sex ~ STATEMENT_END }
+s_skill             = { k_skill ~ ASCII_SEPARATOR+ ~ g_skill ~ STATEMENT_END }
+s_writer_info       = { k_writer_info ~ t_free_text ~ STATEMENT_END }
+s_segment           = { k_segment ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ r_list ~ ASCII_SEPARATOR+ ~ g_quality ~ ASCII_SEPARATOR+ ~ t_label ~ STATEMENT_END }
+s_start_set         = { k_start_set ~ (ASCII_SEPARATOR+ ~ t_string)? ~ STATEMENT_END }
+s_start_box         = { k_start_box ~ STATEMENT_END }
+s_rec_source        = { k_rec_source ~ ASCII_SEPARATOR+ ~ t_string ~ STATEMENT_END }
+s_rec_id            = { k_rec_id ~ ASCII_SEPARATOR+ ~ t_string ~ STATEMENT_END }
+s_rec_contact       = { k_rec_contact ~ t_free_text ~ STATEMENT_END }
+s_rec_info          = { k_rec_info ~ t_free_text ~ STATEMENT_END }
+s_implement         = { k_implement ~ t_free_text ~ STATEMENT_END }
+s_training_set      = { k_training_set ~ (ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ r_list)+ ~ STATEMENT_END }
+s_test_set          = { k_test_set ~ (ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ r_list)+ ~ STATEMENT_END }
+s_adapt_set         = { k_adapt_set ~ (ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ r_list)+ ~ STATEMENT_END }
+s_lexicon_set       = { k_lexicon_set ~ (ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ r_list)+ ~ STATEMENT_END }
+s_rec_time          = { k_rec_time ~ ASCII_SEPARATOR+ ~ r_list ~ ASCII_SEPARATOR+ ~ t_number ~ STATEMENT_END }
+s_rec_labels        = { k_rec_labels ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ r_list ~ ASCII_SEPARATOR+ ~ g_acceptance ~ (ASCII_SEPARATOR+ ~ t_label) ~ STATEMENT_END }
+s_rec_scores        = { k_rec_scores ~ ASCII_SEPARATOR+ ~ t_string ~ ASCII_SEPARATOR+ ~ r_list ~ ASCII_SEPARATOR+ ~ t_number ~ (ASCII_SEPARATOR+ ~ t_label) ~ STATEMENT_END }
+// UPe extension
+s_time_unit = { k_time_unit ~ ASCII_SEPARATOR+ ~ (r_seconds | r_milliseconds | r_microseconds) ~ STATEMENT_END }
+
+statement = _{ s_keyword | s_reserve | s_comment | s_include | s_version | s_data_source | s_data_id | s_coord | s_hierarchy | s_data_contact | s_data_info | s_setup | s_pad | s_alphabet | s_alphabet_freq | s_lexicon_source | s_lexicon_id | s_lexicon_contact | s_lexicon_info | s_lexicon | s_lexicon_freq | s_x_dim | s_y_dim | s_h_line | s_v_line | s_x_points_per_inch | s_y_points_per_inch | s_z_points_per_inch | s_x_points_per_mm | s_y_points_per_mm | s_z_points_per_mm | s_points_per_gram | s_points_per_second | s_pen_down | s_pen_up | s_dt | s_date | s_style | s_writer_id | s_country | s_hand | s_age | s_sex | s_skill | s_writer_info | s_segment | s_start_set | s_start_box | s_rec_source | s_rec_id | s_rec_contact | s_rec_info | s_implement | s_training_set | s_test_set | s_adapt_set | s_lexicon_set | s_rec_time | s_rec_labels | s_rec_scores | s_time_unit }

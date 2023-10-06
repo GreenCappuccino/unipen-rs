@@ -1,0 +1,7 @@
+warn = [
+    "clippy::pedantic",
+    "clippy::nursery",
+    "clippy::unwrap_used",
+# TODO enable before release
+#    "clippy::cargo",
+]
